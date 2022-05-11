@@ -1,0 +1,31 @@
+---
+- hosts: web
+  gather_facts: false
+  tasks:
+    ## 等待服务器连接成功
+    - name: Wait connection
+      wait_for_connection: 
+        sleep: 5
+        timeout: "{{ wait_connection_timeout }}"
+
+    - name: Ensure nginx is at the latest version
+      package:
+        name: nginx
+        state: latest
+      become: yes
+      retries: 3
+      delay: 5
+      register: ensure_nginx
+      until: ensure_nginx is success
+
+    - name: Copy index.html
+      template:
+        src: index.html
+        dest: /var/www/html/index.html
+        mode: '0644'
+
+    - name: Start nginx
+      service:
+        name: nginx
+        state: started
+
